@@ -1,15 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
-<table>
+<h3>Posts</h3>
+<table class="table table-striped table-bordered">
   <thead>
   <tr>
-      <th>Title</th>
-      <th>Author</th>
+      <th scope="col">Title</th>
+      <th scope="col">Author</th>
   </tr>
   </thead>
   <tbody>
       {% for post in posts %}
-          <tr>
+          <tr scope="row">
 
               <td><a class="navbar-brand" href="/posts?post_id={{post['id']|int}}">{{post['title']}}</a></td>
               <td>{{post['user_info']['name']}}</td>
@@ -17,4 +18,5 @@
       {% endfor %}
   </tbody>
 </table>
+<a class="navbar-brand" href="/posts/create">Add Post</a>
 {% endblock %}

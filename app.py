@@ -2,7 +2,7 @@ import functools
 import os
 
 import flask
-from flask import render_template, request
+from flask import render_template, request, redirect, url_for
 from random import randint
 import boto3, json, datetime
 
@@ -33,15 +33,16 @@ app.secret_key = os.environ.get("FN_FLASK_SECRET_KEY", default=False)
 def index():
     if is_logged_in():
         user_info = get_user_info()
-        print(user_info)
-        return render_template('./base.html', user_info=user_info)
+        return redirect(url_for('posts'))
     else:
-        return render_template('./base.html')
+        return render_template('./login.html')
 
 @app.route('/posts', methods=['GET', 'POST'])
 def posts():
+    if not is_logged_in():
+        return redirect(url_for('index'))
+    user_info = get_user_info()
     if request.method == 'POST':
-        user_info = get_user_info()
         request_info = request.form.to_dict()
         lambda_request = {
           "id": random_post_id(),
@@ -57,7 +58,7 @@ def posts():
             InvocationType='RequestResponse',
             Payload=json.dumps(lambda_request)
         )
-        return render_template('./posts.html' , user_info=user_info)
+        return redirect(url_for('posts'))
 
     elif request.method == 'GET':
         post_id = request.args.get('post_id')
@@ -69,7 +70,7 @@ def posts():
             )
             post_bytes = response['Payload'].read()
             post = json.loads(post_bytes.decode("utf-8"))['body']
-            return render_template('./post.html', post=post)
+            return render_template('./post.html', post=post, user_info=user_info)
         else:
             response = lambda_client.invoke(
                 FunctionName="list_posts",
@@ -78,15 +79,46 @@ def posts():
             )
             posts_bytes = response['Payload'].read()
             posts = json.loads(posts_bytes.decode("utf-8"))['body']['items']
-            print(posts)
-            return render_template('./posts.html', posts=posts)
+            return render_template('./posts.html', posts=posts, user_info=user_info)
+
+@app.route('/comments', methods=['GET', 'POST'])
+def comments():
+    if not is_logged_in():
+        return redirect(url_for('index'))
+    user_info = get_user_info()
+    if request.method == 'POST':
+        post_id = request.args.get('post_id')
+        request_info = request.form.to_dict()
+        lambda_request = {
+          "post_id": post_id,
+          "id": random_post_id(),
+          "content": request_info['content'],
+          "user_info": user_info,
+          "created_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        caller_res = lambda_client.invoke(
+            FunctionName="create_comment",
+            InvocationType='RequestResponse',
+            Payload=json.dumps(lambda_request)
+        )
+        return redirect('posts?post_id=' + str(post_id))
 
 @app.route('/posts/create')
 def create_post():
+    if not is_logged_in():
+        return redirect(url_for('index'))
+    user_info = get_user_info()
     if request.method == 'GET':
-        user_info = get_user_info()
-        return render_template('./post_form.html' , user_info=user_info)
+        return render_template('./post_form.html', user_info=user_info)
 
+@app.route('/comments/create')
+def create_comment():
+    if not is_logged_in():
+        return redirect(url_for('index'))
+    user_info = get_user_info()
+    if request.method == 'GET':
+        post_id = request.args.get('post_id')
+        return render_template('./comment_form.html' , user_info=user_info, post_id=post_id)
 
 def no_cache(view):
     @functools.wraps(view)

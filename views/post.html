@@ -3,4 +3,23 @@
 <h1>{{ post['title'] }} </h1>
 
 <p>{{ post['content'] }} </p>
+<a class="navbar-brand" href="/comments/create?post_id={{post['id']|int}}">Add Comment</a>
+{% if post['comments']|length %}
+  <table class="table table-striped table-bordered">
+    <thead>
+    <tr>
+        <th>Comment</th>
+        <th>Author</th>
+    </tr>
+    </thead>
+    <tbody>
+        {% for comment in post['comments'] %}
+            <tr>
+                <td>{{comment['content']}}</td>
+                <td>{{comment['user_info']['name']}}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+  </table>
+{%endif %}
 {% endblock %}

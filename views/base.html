@@ -19,7 +19,7 @@
   <body>
 
     <!-- Fixed navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <a class="navbar-brand" href="/posts">SAA3</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -33,9 +33,9 @@
         </ul>
         <div class="my-2 my-lg-0">
           <ul class="navbar-nav mr-auto">
-            <li class="nav-item active">
+            <li class="nav-item">
               {% if user_info %}
-              Welcome: {{ user_info['name']}}
+              <a class="nav-link" href=''><img src="{{ user_info['picture']}}" height="25" class="rounded-circle" alt="Cinque Terre"> {{ user_info['given_name']}}</a>
               {% else %}
               <a class="nav-link" href='/google/login'>GLogin</a>
               {% endif %}
@@ -49,6 +49,7 @@
         </div>
       </div>
     </nav>
+    <br><br>
     <div class="container">
     {% block content %}{% endblock %}
     </div> <!-- /container -->
@@ -58,9 +59,5 @@
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ" crossorigin="anonymous"></script>
-    <script>window.jQuery || document.write('<script src="../../assets/js/vendor/jquery.min.js"><\/script>')</script>
-    <script src="../../dist/js/bootstrap.min.js"></script>
-    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <script src="../../assets/js/ie10-viewport-bug-workaround.js"></script>
   </body>
 </html>
