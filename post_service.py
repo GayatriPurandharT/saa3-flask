@@ -44,10 +44,12 @@ class PostTable:
     def create_comment(form_info, user_info, post_id):
         lambda_request = {
           "post_id": post_id,
-          "id": random_post_id(),
-          "content": form_info['content'],
-          "user_info": user_info,
-          "created_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+          "comment": {
+              "id": random_post_id(),
+              "content": form_info['content'],
+              "user_info": user_info,
+              "created_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+          }
         }
         caller_res = lambda_client.invoke(
             FunctionName="create_comment",

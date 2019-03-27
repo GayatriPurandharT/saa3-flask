@@ -5,6 +5,7 @@ import flask
 from flask import render_template, request, redirect, url_for
 
 from post_service import PostTable
+from notification_service import Notifier
 
 from authlib.client import OAuth2Session
 import google.oauth2.credentials
@@ -112,6 +113,9 @@ def google_auth_redirect():
     oauth2_tokens = session.fetch_access_token(ACCESS_TOKEN_URI, authorization_response=flask.request.url)
     flask.session[AUTH_TOKEN_KEY] = oauth2_tokens
 
+    user_info = get_user_info()
+    Notifier.add_user_sns(user_info)
+
     return flask.redirect(BASE_URI, code=302)
 
 @app.route('/google/logout')
@@ -141,4 +145,6 @@ def build_credentials():
 def get_user_info():
     credentials = build_credentials()
     oauth2_client = googleapiclient.discovery.build('oauth2', 'v2', credentials=credentials)
-    return oauth2_client.userinfo().get().execute()
+    user_info = oauth2_client.userinfo().get().execute()
+    user_info['id'] = int(user_info['id'])
+    return user_info
