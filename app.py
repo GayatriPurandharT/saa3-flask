@@ -49,7 +49,7 @@ def posts():
     elif request.method == 'GET':
         post_id = request.args.get('post_id')
         if post_id is not None:
-            post = PostTable.get_post(post_id)
+            post = PostTable.get_post(post_id, user_info)
             return render_template('./post.html', post=post, user_info=user_info)
         else:
             posts = PostTable.list_posts()
@@ -82,6 +82,18 @@ def create_comment():
     if request.method == 'GET':
         post_id = request.args.get('post_id')
         return render_template('./comment_form.html' , user_info=user_info, post_id=post_id)
+
+@app.route('/subscribe', methods=['POST'])
+def subscribe():
+    if not is_logged_in():
+        return redirect(url_for('index'))
+    user_info = get_user_info()
+    if request.method == 'POST':
+        post_id = request.args.get('post_id')
+        target_user_id = request.args.get('user_id')
+        print(target_user_id)
+        Notifier.subscribe(target_user_id, user_info)
+        return redirect('posts?post_id=' + str(post_id))
 
 def no_cache(view):
     @functools.wraps(view)

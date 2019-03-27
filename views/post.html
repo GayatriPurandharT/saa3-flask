@@ -3,6 +3,16 @@
 <h1>{{ post['title'] }} </h1>
 
 <p>{{ post['content'] }} </p>
+<p>By {{ post['user_info']['name'] }} </p>
+{% if post['is_subscribed'] %}
+  <form action="/subscribe?post_id={{ post['id']|int }}&user_id={{ post['user_info']['id'] }}" method="post">
+      <input type="submit" name="subscribed" value="subscribed" disabled/>
+  </form>
+{% else %}
+  <form action="/subscribe?post_id={{ post['id']|int }}&user_id={{ post['user_info']['id'] }}" method="post">
+      <input type="submit" name="subscribe" value="subscribe" />
+  </form>
+{% endif %}
 <a class="navbar-brand" href="/comments/create?post_id={{post['id']|int}}">Add Comment</a>
 {% if post['comments']|length %}
   <table class="table table-striped table-bordered">

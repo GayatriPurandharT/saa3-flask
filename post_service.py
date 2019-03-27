@@ -16,11 +16,13 @@ class PostTable:
         posts_bytes = response['Payload'].read()
         return json.loads(posts_bytes.decode("utf-8"))['body']['items']
 
-    def get_post(post_id):
+    def get_post(post_id, user_info):
         response = lambda_client.invoke(
             FunctionName="get_post",
             InvocationType='RequestResponse',
-            Payload=json.dumps({'post_id': post_id})
+            Payload=json.dumps({
+                'post_id': post_id,
+                'user_info': user_info})
         )
         post_bytes = response['Payload'].read()
         return json.loads(post_bytes.decode("utf-8"))['body']
