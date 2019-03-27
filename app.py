@@ -3,14 +3,12 @@ import os
 
 import flask
 from flask import render_template, request, redirect, url_for
-from random import randint
-import boto3, json, datetime
+
+from post_service import PostTable
 
 from authlib.client import OAuth2Session
 import google.oauth2.credentials
 import googleapiclient.discovery
-
-lambda_client = boto3.client('lambda')
 
 ACCESS_TOKEN_URI = 'https://www.googleapis.com/oauth2/v4/token'
 AUTHORIZATION_URL = 'https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=consent'
@@ -44,41 +42,16 @@ def posts():
     user_info = get_user_info()
     if request.method == 'POST':
         request_info = request.form.to_dict()
-        lambda_request = {
-          "id": random_post_id(),
-          "user_info": user_info,
-          "title": request_info['title'],
-          "content": request_info['content'],
-          "created_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-          "views": 0,
-          "comments": []
-        }
-        caller_res = lambda_client.invoke(
-            FunctionName="create_post",
-            InvocationType='RequestResponse',
-            Payload=json.dumps(lambda_request)
-        )
+        PostTable.create_post(request_info, user_info)
         return redirect(url_for('posts'))
 
     elif request.method == 'GET':
         post_id = request.args.get('post_id')
         if post_id is not None:
-            response = lambda_client.invoke(
-                FunctionName="get_post",
-                InvocationType='RequestResponse',
-                Payload=json.dumps({'post_id': post_id})
-            )
-            post_bytes = response['Payload'].read()
-            post = json.loads(post_bytes.decode("utf-8"))['body']
+            post = PostTable.get_post(post_id)
             return render_template('./post.html', post=post, user_info=user_info)
         else:
-            response = lambda_client.invoke(
-                FunctionName="list_posts",
-                InvocationType='RequestResponse',
-                Payload=json.dumps({})
-            )
-            posts_bytes = response['Payload'].read()
-            posts = json.loads(posts_bytes.decode("utf-8"))['body']['items']
+            posts = PostTable.list_posts()
             return render_template('./posts.html', posts=posts, user_info=user_info)
 
 @app.route('/comments', methods=['GET', 'POST'])
@@ -89,18 +62,7 @@ def comments():
     if request.method == 'POST':
         post_id = request.args.get('post_id')
         request_info = request.form.to_dict()
-        lambda_request = {
-          "post_id": post_id,
-          "id": random_post_id(),
-          "content": request_info['content'],
-          "user_info": user_info,
-          "created_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        caller_res = lambda_client.invoke(
-            FunctionName="create_comment",
-            InvocationType='RequestResponse',
-            Payload=json.dumps(lambda_request)
-        )
+        PostTable.create_comment(request_info, user_info, post_id)
         return redirect('posts?post_id=' + str(post_id))
 
 @app.route('/posts/create')
@@ -180,6 +142,3 @@ def get_user_info():
     credentials = build_credentials()
     oauth2_client = googleapiclient.discovery.build('oauth2', 'v2', credentials=credentials)
     return oauth2_client.userinfo().get().execute()
-
-def random_post_id():
-    return randint(0, 99999)
